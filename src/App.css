@@ -1,6 +1,6 @@
 /* App.css -- layout, theming and responsive tweaks */
 
-:root{
+:root {
   --bg: #020617;
   --card-bg: rgba(255,255,255,0.04);
   --panel-bg: rgba(255,255,255,0.03);
@@ -10,159 +10,162 @@
 }
 
 * { box-sizing: border-box; }
-html,body,#root { height: 100%; margin: 0; font-family: Inter, Roboto, "Helvetica Neue", Arial; background: var(--bg); color: white; }
 
-/* ...existing code... */
-
-/* page root: allow scrolling, use min-height so content can grow */
-.app-root {
-  position: relative;
-  min-height: 100vh;
-  width: 100vw;
-  /* allow vertical scrolling when content exceeds viewport */
-  overflow-y: auto;
-  background: linear-gradient(180deg, rgba(2,6,23,1) 0%, rgba(6,12,32,0.95) 60%);
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: #fff;
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
 }
 
-/* Particles canvas: keep behind content but inside stacking context (avoid negative z-index) */
-.particles {
-  position: absolute !important;
-  top: 0;
-  left: 0;
+.app-root {
+  min-height: 100vh;
+  width: 100%;
+  position: relative;
+  overflow-y: auto;
+  background: linear-gradient(180deg, #020617 0%, #030b1f 100%);
+}
+
+#tsparticles {
+  position: fixed !important;
   width: 100%;
   height: 100%;
-  z-index: 0 !important;
+  top: 0;
+  left: 0;
+  z-index: 0;
   pointer-events: none;
-  opacity: 0.95;
 }
 
-/* Main content container sits above particles */
 .container {
   position: relative;
-  z-index: 2; /* must be above particles */
-  display: grid;
-  grid-template-columns: 1fr 360px; /* left wide, right feed column fixed */
-  gap: 20px;
-  /* allow container to grow and not force a fixed viewport-height */
-  min-height: calc(100vh - 48px);
-  padding: 28px;
-}
-
-/* So left column sections can grow and map gets real height */
-.left-column {
-  display: grid;
-  grid-template-rows: 380px 1fr; /* slightly taller chart row for aesthetics */
-  gap: 20px;
-  height: auto;
-}
-
-/* Slightly fresher card visuals */
-.card {
-  background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.02));
-  border-radius: 14px;
-  backdrop-filter: blur(8px) saturate(120%);
-  box-shadow: 0 10px 30px rgba(2,6,23,0.6);
-  border: 1px solid rgba(123,229,255,0.06);
-  overflow: hidden;
-}
-
-/* Header accent */
-.panel-header {
-  padding: 14px 18px;
-  border-bottom: 1px solid rgba(255,255,255,0.03);
-  background: linear-gradient(90deg, rgba(123,229,255,0.02), transparent);
-}
-.panel-header h3 { margin: 0; font-weight: 700; color: var(--accent); letter-spacing: 0.2px; }
-
-/* nicer feed items */
-.feed-item {
-  background: linear-gradient(180deg, rgba(255,255,255,0.017), rgba(255,255,255,0.01));
-  padding: 14px;
-  border-radius: 12px;
-  cursor: pointer;
-  transition: transform 160ms cubic-bezier(.2,.9,.3,1), box-shadow 160ms ease;
-  border: 1px solid rgba(255,255,255,0.03);
-}
-.feed-item:hover {
-  transform: translateY(-6px);
-  box-shadow: 0 18px 40px rgba(2,6,23,0.6), 0 2px 6px rgba(123,229,255,0.03) inset;
-}
-
-/* Modal improvements */
-.modal {
-  width: 760px;
-  max-width: 95%;
-  max-height: 85vh;
-  overflow-y: auto;
-  padding: 18px;
-  border: 1px solid rgba(123,229,255,0.06);
-  box-shadow: 0 30px 80px rgba(2,6,23,0.7);
-}
-
-/* Map panel: ensure map fills and has a soft inner border */
-.map-body {
-  height: 100%;
-  padding: 0;
-  border-top: 1px solid rgba(255,255,255,0.02);
-}
-
-/* slight tweak to log block for readability */
-.log-block {
-  background: rgba(0,0,0,0.6);
-  padding: 14px;
-  border-radius: 10px;
-  white-space: pre-wrap;
-  font-size: 13px;
-  color: #dbeff7;
-}
-
-/* Responsive: keep good spacing when stacked */
-@media (max-width: 900px) {
-  .container { grid-template-columns: 1fr; padding: 14px; min-height: auto; }
-  .left-column { grid-template-rows: 320px 420px; }
-  .modal { width: 94%; }
-}
-
-
-/* Ensure main content sits above particles 
-.container {
-  position: relative;
-  z-index: 2; /* must be above particles (which we set to -1) 
+  z-index: 1;
   display: grid;
   grid-template-columns: 1fr 360px;
-  gap: 20px;
-  height: calc(100vh - 48px);
+  gap: 24px;
+  padding: 24px;
+  min-height: 100vh;
+}
+
+.left-column {
+  display: grid;
+  grid-template-rows: minmax(360px, auto) minmax(400px, 1fr);
+  gap: 24px;
+}
+
+.card {
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(123, 229, 255, 0.08);
+  border-radius: 16px;
+  box-shadow: 
+    0 8px 32px rgba(2, 6, 23, 0.3),
+    0 2px 8px rgba(123, 229, 255, 0.05) inset;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-2px);
+  box-shadow: 
+    0 12px 40px rgba(2, 6, 23, 0.4),
+    0 4px 12px rgba(123, 229, 255, 0.08) inset;
+}
+
+.panel-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: linear-gradient(90deg, rgba(123, 229, 255, 0.03), transparent);
+}
+
+.panel-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--accent);
+  letter-spacing: 0.5px;
+}
+
+.panel-body {
+  padding: 20px;
+}
+
+.chart-body {
+  height: 100%;
+  min-height: 300px;
+  position: relative;
+}
+
+.map-body {
+  height: 100%;
+  min-height: 400px;
+  padding: 0 !important;
+}
+
+.feed-item {
+  margin-bottom: 12px;
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.feed-item:hover {
+  transform: translateY(-4px);
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(123, 229, 255, 0.15);
+  box-shadow: 
+    0 12px 24px rgba(2, 6, 23, 0.4),
+    0 2px 8px rgba(123, 229, 255, 0.06);
+}
+
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(2, 6, 23, 0.8);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal {
+  width: 600px;
+  max-width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
   padding: 24px;
 }
 
-/* Left column: define explicit rows so chart gets a stable height 
-.left-column {
-  display: grid;
-  /* top panel height fixed so Chart has a real height, bottom (map) fills remaining 
-  grid-template-rows: 360px 1fr;
-  gap: 20px;
-  height: 100%;
+.log-block {
+  margin-top: 16px;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  font-family: 'Consolas', monospace;
+  font-size: 13px;
+  color: #dbeff7;
+  white-space: pre-wrap;
 }
 
-/* Chart panel body: fill its parent's row 
-.chart-body {
-  height: 100%;
-  min-height: 280px;  safety 
+.map-tiles {
+  filter: brightness(0.7) saturate(1.2);
 }
 
-/* Map body: keep map visible and contained 
-.map-body {
-  height: 100%;
-  padding: 0;
+@media (max-width: 900px) {
+  .container {
+    grid-template-columns: 1fr;
+    padding: 16px;
+  }
+  
+  .left-column {
+    grid-template-rows: minmax(300px, auto) minmax(350px, auto);
+  }
 }
-
-/* Particles CSS fallback (keeps it full-bleed behind content if class used) 
-.particles {
-  position: absolute !important;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: -1 !important;
-  pointer-events: none;
-}*/

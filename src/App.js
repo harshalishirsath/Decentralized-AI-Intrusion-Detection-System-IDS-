@@ -1,61 +1,29 @@
-// App.js
-import React, { useState, useMemo } from "react";
-import { Line } from "react-chartjs-2";
-import {
-  MapContainer,
-  TileLayer,
-  Marker,
-  Popup
-} from "react-leaflet";
-import "leaflet/dist/leaflet.css";
-import L from "leaflet";
+import React, { useState, useMemo, useRef, useCallback } from 'react';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import L from 'leaflet';
+import { Chart as ChartJS } from 'chart.js/auto';
+import { Line } from 'react-chartjs-2';
 import Particles from "react-tsparticles";
-import { loadFull } from "tsparticles";
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend
-} from "chart.js";
+import { loadSlim } from "tsparticles-slim"; // Changed from loadFull to loadSlim
 import "./App.css";
 
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend
-);
-
-// Use Leaflet's default marker via CDN asset (works in CRA)
 const markerIcon = new L.Icon({
-  iconUrl:
-    "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png",
-  iconRetinaUrl:
-    "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png",
-  shadowUrl:
-    "https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png",
+  iconUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png",
+  iconRetinaUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png",
+  shadowUrl: "https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png",
   iconSize: [25, 41],
   iconAnchor: [12, 41],
   popupAnchor: [1, -34],
   shadowSize: [41, 41],
 });
 
-// --- Your JSON data used as a JS object (two sample alerts) ---
 const INITIAL_ALERTS = [
   {
     id: "a1b2c3d4-e5f6-7890-1234-567890abcdef",
     timestamp: "2025-08-13T17:30:00Z",
     score: 0.98,
     ip_address: "203.0.113.42",
-    reason:
-      "Brute-force attack detected due to 50+ failed logins in one minute.",
+    reason: "Brute-force attack detected due to 50+ failed logins in one minute.",
     geolocation: {
       country: "United States",
       city: "New York",
@@ -81,86 +49,216 @@ const INITIAL_ALERTS = [
     },
     logs: ["Jul 22 03:05:15 firewall: PORT_SCAN from 198.51.100.10"],
   },
+  {
+    id: "c3d4e5f6-7890-1234-5678-90abcdef0123",
+    timestamp: "2025-08-13T18:45:22Z",
+    score: 0.85,
+    ip_address: "192.0.2.15",
+    reason: "SQL injection attempt detected.",
+    geolocation: {
+      country: "China",
+      city: "Beijing",
+      lat: 39.9042,
+      lng: 116.4074,
+    },
+    logs: [
+      "Jul 22 04:45:22 web-server: SQL_INJECTION_ATTEMPT from 192.0.2.15",
+      "Jul 22 04:45:23 web-server: Blocked malicious SQL query"
+    ],
+  },
+  {
+    id: "d4e5f678-9012-3456-7890-abcdef012345",
+    timestamp: "2025-08-13T19:10:33Z",
+    score: 0.76,
+    ip_address: "203.0.113.75",
+    reason: "Multiple failed API authentication attempts.",
+    geolocation: {
+      country: "Brazil",
+      city: "São Paulo",
+      lat: -23.5505,
+      lng: -46.6333,
+    },
+    logs: [
+      "Jul 22 05:10:33 api-gateway: Failed authentication for user admin from 203.0.113.75",
+      "Jul 22 05:10:34 api-gateway: Failed authentication for user admin from 203.0.113.75"
+    ],
+  }
 ];
 
 export default function App() {
-  const [alerts] = useState(INITIAL_ALERTS); // static for now
+  const [alerts] = useState(INITIAL_ALERTS);
   const [selectedAlert, setSelectedAlert] = useState(null);
+  const mapRef = useRef(null);
 
-  // Prepare chart data (simple count per alert time)
-  const chartData = useMemo(() => {
-    const labels = alerts.map((a) =>
-      new Date(a.timestamp).toLocaleString()
-    );
-    const dataset = alerts.map(() => 1); // each alert counts as 1
-    return {
-      labels,
-      datasets: [
-        {
-          label: "Attacks",
-          data: dataset,
-          fill: false,
-          borderColor: "#7be5ff",
-          backgroundColor: "#7be5ff",
-          tension: 0.3,
-          pointRadius: 4,
+  // Updated particles initialization
+  const particlesInit = useCallback(async (engine) => {
+    await loadSlim(engine); // Using loadSlim instead of loadFull
+  }, []);
+
+  const particlesOptions = {
+    background: {
+      color: "transparent"
+    },
+    fpsLimit: 60,
+    interactivity: {
+      events: {
+        onClick: {
+          enable: true,
+          mode: "push"
         },
-      ],
-    };
-  }, [alerts]);
+        onHover: {
+          enable: true,
+          mode: "repulse"
+        }
+      },
+      modes: {
+        push: {
+          quantity: 4
+        },
+        repulse: {
+          distance: 100,
+          duration: 0.4
+        }
+      }
+    },
+    particles: {
+      color: {
+        value: "#7be5ff"
+      },
+      move: {
+        direction: "none",
+        enable: true,
+        outModes: {
+          default: "out"
+        },
+        random: true,
+        speed: 3,
+        straight: false,
+        trail: {
+          enable: true,
+          length: 10,
+          fillColor: "#020617"
+        }
+      },
+      number: {
+        density: {
+          enable: true,
+          area: 800
+        },
+        value: 30
+      },
+      opacity: {
+        value: 0.5,
+        animation: {
+          enable: true,
+          speed: 0.5,
+          minimumValue: 0.1,
+          sync: false
+        }
+      },
+      shape: {
+        type: "circle"
+      },
+      size: {
+        value: { min: 1, max: 3 },
+        animation: {
+          enable: true,
+          speed: 5,
+          minimumValue: 0.1,
+          sync: false
+        }
+      }
+    }
+  };
 
-  // tsparticles init
-  const particlesInit = async (main) => {
-    await loadFull(main);
+  const chartData = {
+    labels: alerts.map(a => new Date(a.timestamp).toLocaleTimeString()),
+    datasets: [{
+      label: 'Alert Score',
+      data: alerts.map(a => a.score),
+      borderColor: '#7be5ff',
+      backgroundColor: 'rgba(123, 229, 255, 0.1)',
+      tension: 0.4,
+      fill: true,
+      pointBackgroundColor: '#7be5ff',
+      pointBorderColor: '#020617',
+      pointHoverRadius: 6,
+      pointRadius: 4
+    }]
+  };
+
+  const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        display: false
+      },
+      tooltip: {
+        backgroundColor: 'rgba(2, 6, 23, 0.9)',
+        titleColor: '#7be5ff',
+        bodyColor: '#ffffff',
+        borderColor: 'rgba(123, 229, 255, 0.2)',
+        borderWidth: 1,
+        padding: 12,
+        callbacks: {
+          label: function(context) {
+            const alert = alerts[context.dataIndex];
+            return [
+              `Score: ${alert.score.toFixed(2)}`,
+              `IP: ${alert.ip_address}`,
+              `Reason: ${alert.reason}`
+            ];
+          }
+        }
+      }
+    },
+    scales: {
+      y: {
+        min: 0,
+        max: 1,
+        ticks: {
+          stepSize: 0.2,
+          color: 'rgba(255, 255, 255, 0.6)'
+        },
+        grid: {
+          color: 'rgba(255, 255, 255, 0.1)'
+        },
+        border: {
+          color: 'rgba(255, 255, 255, 0.1)'
+        }
+      },
+      x: {
+        ticks: {
+          color: 'rgba(255, 255, 255, 0.6)',
+          maxRotation: 45
+        },
+        grid: {
+          color: 'rgba(255, 255, 255, 0.1)'
+        },
+        border: {
+          color: 'rgba(255, 255, 255, 0.1)'
+        }
+      }
+    }
   };
 
   return (
     <div className="app-root">
-      {/* Particle background (meteor shower-like) */}
+      <Particles 
+        id="tsparticles" 
+        init={particlesInit} 
+        options={particlesOptions} 
+      />
 
-
-<Particles
-  id="tsparticles"
-  className="particles"
-  init={particlesInit}
-  options={{
-    background: { color: { value: "transparent" } }, // let page background show through
-    fpsLimit: 60,
-    particles: {
-      number: { value: 120, density: { enable: true, area: 800 } },
-      color: { value: "#9be7ff" },
-      shape: { type: "circle" },
-      opacity: { value: { min: 0.4, max: 0.9 }, random: true },
-      size: { value: { min: 1, max: 3 } },
-      move: {
-        enable: true,
-        speed: 4.5,
-        direction: "bottom-right",
-        outModes: "out",
-        trail: { enable: true, length: 6, fillColor: "#020617" }
-      },
-      rotate: { value: 0, random: true, animation: { enable: false } }
-    },
-    interactivity: {
-      detectsOn: "canvas",
-      events: { onHover: { enable: false }, onClick: { enable: false }, resize: true }
-    },
-    detectRetina: true
-  }}
-/>
-
-
-
-      {/* Layout grid */}
       <div className="container">
-        {/* LEFT: stacked chart (top) and map (bottom) */}
         <div className="left-column">
           <div className="panel card chart-panel">
             <div className="panel-header">
               <h3>Attack Trends</h3>
             </div>
             <div className="panel-body chart-body">
-              <Line data={chartData} options={{ maintainAspectRatio: false }} />
+              <Line data={chartData} options={chartOptions} />
             </div>
           </div>
 
@@ -169,19 +267,30 @@ export default function App() {
               <h3>Geolocation Map</h3>
             </div>
             <div className="panel-body map-body">
-              <MapContainer center={[20, 0]} zoom={2} style={{ height: "100%", width: "100%" }}>
-                <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-                {alerts.map((a) => (
-                  <Marker key={a.id} position={[a.geolocation.lat, a.geolocation.lng]} icon={markerIcon}>
+              <MapContainer
+                ref={mapRef}
+                center={[20, 0]}
+                zoom={2}
+                style={{ height: "100%", width: "100%" }}
+              >
+                <TileLayer
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                  className="map-tiles"
+                />
+                {alerts.map((alert) => (
+                  <Marker
+                    key={alert.id}
+                    position={[alert.geolocation.lat, alert.geolocation.lng]}
+                    icon={markerIcon}
+                    eventHandlers={{
+                      click: () => setSelectedAlert(alert),
+                    }}
+                  >
                     <Popup>
                       <div>
-                        <strong>{a.ip_address}</strong>
-                        <div>{a.geolocation.city}, {a.geolocation.country}</div>
-                        <div style={{ marginTop: 6 }}>
-                          <button onClick={() => { setSelectedAlert(a); }}>
-                            View details
-                          </button>
-                        </div>
+                        <h4>{alert.geolocation.city}, {alert.geolocation.country}</h4>
+                        <p>{alert.reason}</p>
+                        <small>IP: {alert.ip_address}</small>
                       </div>
                     </Popup>
                   </Marker>
@@ -191,47 +300,51 @@ export default function App() {
           </div>
         </div>
 
-        {/* RIGHT: real-time feed panel */}
-        <aside className="right-column card feed-panel">
+        <div className="card">
           <div className="panel-header">
             <h3>Real-time Feed</h3>
-            <div className="feed-sub">Latest alerts — click to expand</div>
           </div>
-          <div className="panel-body feed-body">
-            <ul className="feed-list">
-              {alerts.map((a) => (
-                <li key={a.id} className="feed-item" onClick={() => setSelectedAlert(a)}>
-                  <div className="feed-item-top">
-                    <div className="feed-time">{new Date(a.timestamp).toLocaleString()}</div>
-                    <div className="feed-score">score: {a.score}</div>
-                  </div>
-                  <div className="feed-reason">{a.reason}</div>
-                  <div className="feed-ip">IP: {a.ip_address} • {a.geolocation.city}, {a.geolocation.country}</div>
-                </li>
-              ))}
-            </ul>
+          <div className="panel-body">
+            {alerts.map((alert) => (
+              <div
+                key={alert.id}
+                className="feed-item"
+                onClick={() => setSelectedAlert(alert)}
+              >
+                <div style={{ marginBottom: '8px' }}>
+                  <strong>{new Date(alert.timestamp).toLocaleString()}</strong>
+                </div>
+                <div style={{ marginBottom: '4px', color: '#7be5ff' }}>
+                  Score: {alert.score.toFixed(2)}
+                </div>
+                <div style={{ fontSize: '0.9em', color: 'rgba(255,255,255,0.8)' }}>
+                  {alert.reason}
+                </div>
+                <div style={{ marginTop: '8px', fontSize: '0.8em', color: 'rgba(255,255,255,0.6)' }}>
+                  IP: {alert.ip_address} • {alert.geolocation.city}, {alert.geolocation.country}
+                </div>
+              </div>
+            ))}
           </div>
-        </aside>
+        </div>
       </div>
 
-      {/* Modal: detailed alert view */}
       {selectedAlert && (
         <div className="modal-backdrop" onClick={() => setSelectedAlert(null)}>
-          <div className="modal card" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-header">
-              <h4>Alert Details</h4>
-              <button className="close-btn" onClick={() => setSelectedAlert(null)}>✕</button>
+          <div className="modal card" onClick={e => e.stopPropagation()}>
+            <h3>Alert Details</h3>
+            <div style={{ marginTop: '12px' }}>
+              <div><strong>Time:</strong> {new Date(selectedAlert.timestamp).toLocaleString()}</div>
+              <div><strong>IP:</strong> {selectedAlert.ip_address}</div>
+              <div><strong>Location:</strong> {selectedAlert.geolocation.city}, {selectedAlert.geolocation.country}</div>
+              <div><strong>Score:</strong> {selectedAlert.score.toFixed(2)}</div>
+              <div><strong>Reason:</strong> {selectedAlert.reason}</div>
             </div>
-
-            <div className="modal-body">
-              <p><strong>ID:</strong> {selectedAlert.id}</p>
-              <p><strong>Timestamp:</strong> {new Date(selectedAlert.timestamp).toLocaleString()}</p>
-              <p><strong>Score:</strong> {selectedAlert.score}</p>
-              <p><strong>Reason:</strong> {selectedAlert.reason}</p>
-              <p><strong>IP Address:</strong> {selectedAlert.ip_address}</p>
-              <p><strong>Location:</strong> {selectedAlert.geolocation.city}, {selectedAlert.geolocation.country}</p>
-              <h5>Raw logs</h5>
-              <pre className="log-block">{selectedAlert.logs.join("\n")}</pre>
+            <div className="panel-header" style={{ marginTop: '16px' }}>
+              <h3>Log Entries</h3>
+            </div>
+            <div className="log-block">
+              {selectedAlert.logs.join('\n')}
             </div>
           </div>
         </div>
